@@ -130,3 +130,89 @@ webpack project
 --> global.js  
 --> bundle.js
 ```
+
+### Loaders
+
+Webpack doesnt know much things to do so we use loaders to do some other fancy stuff using `loaders`.
+
+Loaders can be used to convert es6 to es5, jsx to js etc. To use them we will have to install individual loader.
+
+**NOTE:** loaders must be added with `-dev` tag while installing as they are dev dependencies.
+
+Lets add some loader modules -
+
+After installing some loader, package json will look something simlir to below file -
+
+```
+{
+  "name": "webpack-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "babel-core": "^6.21.0",
+    "babel-loader": "^6.2.10",
+    "babel-preset-es2015": "^6.18.0",
+    "jshint": "^2.9.4",
+    "jshint-loader": "^0.8.3",
+    "node-libs-browser": "^2.0.0"
+  }
+}
+```
+
+**node-libs-browser** - node-libs-browser is a peer dependency of Webpack. As stated in the package page it provides certain Node libraries for browser usage. Obviously modules such as fs won't be available there but you can still use quite a few.
+
+**js-hint** - basically it gives errors and warning depending upon code error and format.
+
+
+Lets suppose we have added some es6 code in `login.js` adn renamed it to `login.es6` then to use loaders we can modify our `webpack.config.js` like below -
+
+```
+module.exports =  {
+  entry: ['global.js', 'app.js'],
+  output: {
+    filename: 'bundle.js'
+  },
+  // for a loaders we add a module object
+  module: {
+    // array that holds loader's setting
+    loaders: [
+    // there are three key for each loader
+    // test - tells which file to target (regex)
+    // exclude - tells which file to ignore (regex)
+    // loader - tells which loader to use
+      {
+        test: /\.es6$/,
+        exclude: /node_modules/,
+        loader: 'babel-loader'
+      }
+    ]
+  },
+  // this object tells which type of files webpack can process without
+  // specifically giving them file extension
+
+  // webpack by default add .js extension but it can overridden, as we are
+  // doing below
+  resolve: {
+    // notice we changed the login.js to login.es6
+    // and we are requiring login file in app.js
+    // so by adding below line webpack will first search for file
+    // with name login then login.js and if that's not found too , it will
+    // search for login.es6
+    extensions: ['', '.js', '.es6']
+  },
+
+  watch: true
+};
+
+```
+
+Now going back to console, we can type `webpack` and we will get bundle.js as output with all es6 code converted to es5. Similary react code can be transpiled too.
+
+**NOTE:** Be careful about the spelling of keys in webpack.config.js
