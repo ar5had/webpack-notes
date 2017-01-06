@@ -309,3 +309,54 @@ To run our server by custom npm command, goto package.json and do the following 
 
 
 now run your server just by typing `npm start` in command line.
+
+
+### Production vs Develoment Builds
+In development builds we dont want out code to be minimized for debugging reasons, but in production env we need to minimize the code to improve performance.
+
+It is very simple to do by command-line -
+
+`webpack -p`
+
+-p tag will minimize the code We dont have to do these things by ourselves. Travis CI or other CI software will do that for you.
+
+#### To create different config file to strip out some code
+Now we are goin to install a loader named `strip-loader`
+
+After installing it as dev dependency, we are going to make a production webpack config file named `webpack.production.config.js`.
+
+Content -
+
+```
+// webpack.production.config.js
+var WebpackStrip = require('strip-loader');
+var devConfig = require('./webpack.config.js');
+var stripLoader = {
+  test:[/\.js$/, /\.es6$/],
+  exclude: /node_modules/,
+  // add statements here that are to be stripped out of code
+  loader: WebpackStrip.loader('console.log')
+}
+
+devConfig.module.loaders.push(stripLoader);
+
+module.exports = devConfig;
+
+```
+To run in production env, we can type a command like
+
+`webpack --config=webpack.production.config.js -p`
+
+--config value will tell which webpack config file to execute.
+
+Note here we cant use `webpack-dev-server` as it will run and rebuild in dev environment so we are using `http-server` to create web server in cwd by typing command -
+
+`http-server`
+
+now going back to browser on right port, we will see tht console.log statement will not be executed.
+
+We need to add a `.babelrc` file so that babel can work nicely with `UglifyJs`. Give it the following content -
+
+`{ "presets": ["es2015"] }`
+
+**A quick note about rc file** - rc dotfiles are configuration files that can vary in their use, formatting, and overall meaning. You can create .[whatever name you like]rc files to inform whatever package you happen to be creating (provided another package isn't looking for the same one). Usually, they're useful for some sort of tool that acts on your source code and needs some tuning specific to your project. My understanding is that there were similar files that played an important role in UNIX systems in years past and the idea has stuck.
