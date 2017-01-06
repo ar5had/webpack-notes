@@ -57,7 +57,6 @@ webpack project
 --> bundle.js
 ```
 
-
 ### To rerun build whenever your input file is changed -
 
 In command line, type `webpack --watch`
@@ -216,3 +215,97 @@ module.exports =  {
 Now going back to console, we can type `webpack` and we will get bundle.js as output with all es6 code converted to es5. Similary react code can be transpiled too.
 
 **NOTE:** Be careful about the spelling of keys in webpack.config.js
+
+
+### Preloaders
+
+Preloaders run before loaders. They are used to check linting errors etc. We are going to use jshint. First of all we create a `.jshintrc` file with below content -
+
+```
+// .jshintrc content
+{}
+```
+
+In `webpack.config.js`
+
+```
+module.exports =  {
+  entry: ['global.js', 'app.js'],
+  output: {
+    filename: 'bundle.js'
+  },
+  // for a loaders we add a module object
+  module: {
+    // array that holds loader's setting
+    preLoaders: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        loader: 'jshint-loader'
+      }
+    ],
+    // array that holds loader's setting
+    loaders: [
+    // there are three key for each loader
+    // test - tells which file to target (regex)
+    // exclude - tells which file to ignore (regex)
+    // loader - tells which loader to use
+      {
+        test: /\.es6$/,
+        exclude: /node_modules/,
+        loader: 'babel-loader'
+      }
+    ]
+  },
+  // this object tells which type of files webpack can process without
+  // specifically giving them file extension
+
+  // webpack by default add .js extension but it can overridden, as we are
+  // doing below
+  resolve: {
+    // notice we changed the login.js to login.es6
+    // and we are requiring login file in app.js
+    // so by adding below line webpack will first search for file
+    // with name login then login.js and if that's not found too , it will
+    // search for login.es6
+    extensions: ['', '.js', '.es6']
+  },
+
+  watch: true
+};
+
+```
+
+### Creating a Start script
+
+Gulp, grunt have functionality to add custom commands to start script but webpack doesnt have so. That doesnt mean webpack is low on this side because npm has this functionality built in.
+
+To run our server by custom npm command, goto package.json and do the following changes -
+
+```
+{
+  "name": "webpack-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  // scripts allows to add custom commands
+  "scripts": {
+    "start": "webpack-dev-server"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "babel-core": "^6.21.0",
+    "babel-loader": "^6.2.10",
+    "babel-preset-es2015": "^6.18.0",
+    "jshint": "^2.9.4",
+    "jshint-loader": "^0.8.3",
+    "node-libs-browser": "^2.0.0"
+  }
+}
+
+```
+
+
+now run your server just by typing `npm start` in command line.
