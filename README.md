@@ -1,10 +1,14 @@
 # webpack-notes
-simple webpack notes.
+simple webpack notes. Reading these notes along with [Webpack Fundamental Course](https://app.pluralsight.com/library/courses/webpack-fundamentals/table-of-contents) by Joe Eames will benifit you the most. Feel free to fork it add your notes.
 
 ## TOC
 
 - [Need of webpack](#need-of-webpack)
 - [Basics](#basics)
+- [Advanced](#advanced)
+- [Adding Images & Fonts to Your Build](#adding-images-&-fonts-to-your-build)
+- [Webpack Tools](#webpack-tools)
+- [Webpack and Front End Frameworks](#webpack-and-front-end-frameworks)
 
 ## Need of Webpack
 
@@ -360,3 +364,5 @@ We need to add a `.babelrc` file so that babel can work nicely with `UglifyJs`. 
 `{ "presets": ["es2015"] }`
 
 **A quick note about rc file** - rc dotfiles are configuration files that can vary in their use, formatting, and overall meaning. You can create .[whatever name you like]rc files to inform whatever package you happen to be creating (provided another package isn't looking for the same one). Usually, they're useful for some sort of tool that acts on your source code and needs some tuning specific to your project. My understanding is that there were similar files that played an important role in UNIX systems in years past and the idea has stuck.
+
+## Advanced
