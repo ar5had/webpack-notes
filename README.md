@@ -7,7 +7,7 @@ simple webpack notes.
 
 ## Need of Webpack
 
-Webpack is an optimized advanced task runner that is used to process input file into output files.
+Webpack is a build tool that puts all of your assets, including Javascript, images, fonts, and CSS, in a dependency graph. In short it is an optimized advanced task runner that is used to process input file into output files. It supports all the three module system i.e., CommonJS, AMD, ES6 modules.
 
 The process involves below steps:
 
