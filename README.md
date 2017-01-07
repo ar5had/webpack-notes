@@ -1,5 +1,5 @@
 # webpack-notes
-simple webpack notes. Reading these notes along with [Webpack Fundamental Course](https://app.pluralsight.com/library/courses/webpack-fundamentals/table-of-contents) by Joe Eames will benifit you the most. Feel free to fork it add your notes.
+Simple webpack notes. Reading these notes along with [Webpack Fundamental Course](https://app.pluralsight.com/library/courses/webpack-fundamentals/table-of-contents) by Joe Eames will benifit you the most. Feel free to fork it add make a pr to add your notes.
 
 ## TOC
 
@@ -366,3 +366,264 @@ We need to add a `.babelrc` file so that babel can work nicely with `UglifyJs`. 
 **A quick note about rc file** - rc dotfiles are configuration files that can vary in their use, formatting, and overall meaning. You can create .[whatever name you like]rc files to inform whatever package you happen to be creating (provided another package isn't looking for the same one). Usually, they're useful for some sort of tool that acts on your source code and needs some tuning specific to your project. My understanding is that there were similar files that played an important role in UNIX systems in years past and the idea has stuck.
 
 ## Advanced
+
+### Organizing Files and Folders
+We will not want to add bundle.js file in our source control. To do so we must add bundle.js file to a folder that is ignored by our source control but can be accessible through a pseudo relative url. We'll be running build command on server using travis ci or other ci, so it will be accessible on server. We just dont want to add the user's bundle.js file to the file that is used on server.
+
+To do so we have to do some changes in our code.
+
+Our new project structure looks like -
+```
+webpack-project
+
+--> js
+----> app.js
+----> login.es6
+----> utils.js
+
+--> public
+----> index.html
+
+--> webpack.config.js
+--> package.json
+```
+
+Our index.html files now looks like below:
+```
+<html>
+  <body>
+    <script src="/public/assets/js/bundle.js"></script>
+  <body>
+</html>
+```
+
+Practically there will be no file at `/public/assets/js/bundle.js`, what webpack-dev-server will do here is that it will serve file in `/build/js/bundle.js` to every request for the url `/public/assets/js/bundle.js`. If we dont use `webpack-dev-server` for build then we can't be able to serve file from pseudo path.
+
+So we have to do below changes in `webpack.config.json` -
+
+```
+var path = require('path');
+
+
+module.exports = {
+  // Context key set relative path for entry key
+  // earlier we didnt have directories so there was
+  // no need of this key
+  context: path.resolve('js'),
+	entry: ['./utils.js','./app.js'],
+	output: {
+    // path key tells webpack where to put build file
+    path: path.resolve('build/js/'),
+    // publicPath key tells webpack the url for which
+    // bundle file will be served
+    publicPath: '/public/assets/js/',
+		filename: 'bundle.js'
+	},
+  // as we have added folder now, so for webpack to serve
+  // html, we need to tell which folder to look in
+  // this is done by adding new key devServer
+  devServer: {
+    // it tells the path of static content
+    contentBase: 'public'
+  },
+
+	module: {
+		preLoaders: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        loader: 'jshint-loader'
+      }
+    ],
+		loaders: [
+			{
+				test: /\.es6$/,
+				exclude: /node_modules/,
+				loader: 'babel-loader'
+			}
+		]
+	},
+	resolve: {
+		extensions: ['', '.js', '.es6']
+	},
+	watch: true
+
+}
+
+```
+
+One interesting thing to mention here is , if we run `webpack-dev-server` and goto `localhost:8080/webpack-dev-server/index.html` build file will be created virtually and will not take space on disk.
+
+If we run `webpack` command then disk file for bundle.js will be created but not when using `webpack-dev-server` command.
+
+
+### Working with ES6 modules
+
+Let's say we have changed our app.js file to app.es6 file and did some changes in login.es6 too.
+
+Changes in these files -
+
+app.es6
+```
+//require('./login');
+import {login} from './login';
+login("from app.js");
+document.write("Hello, from the other side");
+console.log('app loaded');
+
+```
+
+login.es6
+```
+let login = (a) => {
+  console.log('ES6 code executed!', a);
+  document.write("from login");
+};
+
+export {login};
+
+```
+
+
+Now to support es6 imports we have to do some small changes in `webpack.config.js` file.
+
+Changes -
+
+``` js
+var path = require('path');
+
+
+module.exports = {
+
+
+  // Context key set relative path for entry key
+  // earlier we didnt have directories so there was
+  // no need of this key
+  context: path.resolve('js'),
+	// we have removed the extention from here
+	// as we have already set resolve for extention below
+	entry: ['./utils','./app'],
+
+
+  output: {
+    // path key tells webpack where to put build file
+    path: path.resolve('build/js/'),
+    // publicPath key tells webpack the url for which
+    // bundle file will be served
+    publicPath: '/public/assets/js/',
+		filename: 'bundle.js'
+	},
+
+  // as we have added folder now, so for webpack to serve
+  // html, we need to tell which folder to look in
+  // this is done by adding new key devServer
+  devServer: {
+    // it tells the path of static content
+    contentBase: 'public'
+  },
+
+	module: {
+		loaders: [
+			{
+				test: /\.es6$/,
+				exclude: /node_modules/,
+				loader: 'babel-loader'
+			}
+		]
+	},
+	resolve: {
+		extensions: ['', '.js', '.es6']
+	}
+
+}
+
+
+```
+
+Now running webpack-dev-server we will get our app going using es6 import.
+
+### Adding Source Maps
+Source maps are built into webpack, it can be added by adding `-d` flag in webpack and webpack-dev-server command.
+
+Just add `debugger;` to part of code which you want to set up as breakpoint.
+
+
+### Creating Multiple Bundles
+
+We have changed our project structure, now our project structure looks like -
+
+```
+webpack-project
+
+--> js
+----> a.js
+----> b.es6
+----> c.js
+
+--> public
+----> a.html
+----> b.html
+----> c.html
+
+--> webpack.config.js
+--> package.json
+```
+
+Each of html file has two script tags. For ex - a.html has script tags to `/public/assets/js/a.js` and `/public/assets/js/shared.js`. Similar is the case with `b.js` and `c.js`.
+
+Earlier we used to have on single file that has all the code that even wasn't needed to be there. Every thing loaded up before their use. Using this seperate bundle way, we can make lazy loading i.e., using code only at the time of need, this improves our app's performance.
+
+Shared file will have shared code and other files will have their respective code.
+
+But how do webpack know which file is for which html page??
+
+To make webpack understand we have to do the following changes in `webpack.config.js` -
+
+```
+var path = require('path');
+// adding webpack module so that we can make shared code in a file
+var webpack = require('webpack');
+// this code adds a plugin
+var commonsPlugin = new webpack.optimize.CommonsChunkPlugin('shared.js');
+
+
+module.exports = {
+  context: path.resolve('js'),
+  // replacing entry value with object
+  entry: {
+    a: './a.js',
+    b: './b.js',
+    c: './c.js'
+  },
+	output: {
+    path: path.resolve('build/js/'),
+    publicPath: '/public/assets/js/',
+    // it will make the name of the output
+    // file match the keys in entry
+    filename: '[name].js'
+	},
+
+  plugins: [commonsPlugin],
+
+  devServer: {
+    // it tells the path of static content
+    contentBase: 'public'
+  },
+
+	module: {
+		loaders: [
+			{
+				test: /\.es6$/,
+				exclude: /node_modules/,
+				loader: 'babel-loader'
+			}
+		]
+	},
+	resolve: {
+		extensions: ['', '.js', '.es6']
+	}
+
+}
+```
+
+We will creates seperate bundle for each file and shared code will be present in one file. Shared code have common modules that are imported in our code and other common stuff.
