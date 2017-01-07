@@ -1239,3 +1239,101 @@ module.exports = {
 
 }
 ```
+
+
+## Webpack and Front End Frameworks
+
+### Webpack React Build
+
+Our project structure
+```
+webpack-project
+
+--> public
+----> index.html
+
+----> js
+------> app.js
+------> login.es6
+------> utils.js
+
+--> .babelrc
+--> webpack.config.js
+--> package.json
+
+```
+
+
+We will add some dev dependencies like `babel-preset-react` for jsx support , `babel-core`, `babel-loader`, `babel-preset-es2015`, `node-libs-browser` and `webpack`.
+
+.babelrc content -
+{
+  preset: ["es2015", "react"]
+}
+
+
+We made some changes in webpack.config.js file -
+
+``` js
+var path = require('path');
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
+
+module.exports = {
+  context: path.resolve('js'),
+  entry: ["./utils.js","./app.js"],
+	output: {
+    path: path.resolve('build/js/'),
+    publicPath: '/public/assets/js/',
+    filename: 'bundle.js'
+	},
+  plugins: [
+    new ExtractTextPlugin("styles.css")
+  ],
+  devServer: {
+    contentBase: 'public'
+  },
+	module: {
+		loaders: [
+      {
+        test: /\.(es6|js)$/,
+        exclude: /node_modules/,
+        loader: "babel-loader"
+      },
+      {
+  			test: /\.css$/,
+        exclude: /node_modules/,
+        loader: ExtractTextPlugin.extract( "style-loader", "css-loader")
+      }
+    ]
+	},
+  resolve: {
+    extension: ['', '.js', '.es6']
+  }
+}
+```
+
+app.js code
+
+``` js
+// some react codde
+import React from 'react';
+import ReactDOM from 'react-dom';
+
+const Title = () => {
+	return (
+		<div id="titleWrapper">
+			<h2 className="textCenter">To-do List</h2>
+		</div>
+	);
+};
+
+ReactDOM.render(<Title />, main);
+
+require('./login');
+
+```
+
+now all we have to do is just run `webpack-dev-server` and goto localhost:8080 to see result.
+
+
+**NOTE:** `babelrc` and all other rc files are json file so make sure you use right format and always use double quotes as single quotes is not valid json.
