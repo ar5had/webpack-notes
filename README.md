@@ -6,7 +6,7 @@ Simple webpack notes. Reading these notes along with [Webpack Fundamental Course
 - [Need of webpack](#need-of-webpack)
 - [Basics](#basics)
 - [Advanced](#advanced)
-- [Adding Images & Fonts to Your Build](#adding-images-&-fonts-to-your-build)
+- [Adding Images & Fonts](#adding-images-&-fonts)
 - [Webpack Tools](#webpack-tools)
 - [Webpack and Front End Frameworks](#webpack-and-front-end-frameworks)
 
@@ -146,7 +146,7 @@ Lets add some loader modules -
 
 After installing some loader, package json will look something simlir to below file -
 
-```
+``` js
 {
   "name": "webpack-project",
   "version": "1.0.0",
@@ -176,7 +176,7 @@ After installing some loader, package json will look something simlir to below f
 
 Lets suppose we have added some es6 code in `login.js` adn renamed it to `login.es6` then to use loaders we can modify our `webpack.config.js` like below -
 
-```
+``` js
 module.exports =  {
   entry: ['global.js', 'app.js'],
   output: {
@@ -232,7 +232,7 @@ Preloaders run before loaders. They are used to check linting errors etc. We are
 
 In `webpack.config.js`
 
-```
+``` js
 module.exports =  {
   entry: ['global.js', 'app.js'],
   output: {
@@ -286,7 +286,7 @@ Gulp, grunt have functionality to add custom commands to start script but webpac
 
 To run our server by custom npm command, goto package.json and do the following changes -
 
-```
+``` js
 {
   "name": "webpack-project",
   "version": "1.0.0",
@@ -330,7 +330,7 @@ Now we are goin to install a loader named `strip-loader`
 After installing it as dev dependency, we are going to make a production webpack config file named `webpack.production.config.js`.
 
 Content -
-
+ js
 ```
 // webpack.production.config.js
 var WebpackStrip = require('strip-loader');
@@ -401,7 +401,7 @@ Practically there will be no file at `/public/assets/js/bundle.js`, what webpack
 
 So we have to do below changes in `webpack.config.json` -
 
-```
+``` js
 var path = require('path');
 
 
@@ -464,7 +464,7 @@ Let's say we have changed our app.js file to app.es6 file and did some changes i
 Changes in these files -
 
 app.es6
-```
+``` js
 //require('./login');
 import {login} from './login';
 login("from app.js");
@@ -474,7 +474,7 @@ console.log('app loaded');
 ```
 
 login.es6
-```
+``` js
 let login = (a) => {
   console.log('ES6 code executed!', a);
   document.write("from login");
@@ -496,9 +496,6 @@ var path = require('path');
 module.exports = {
 
 
-  // Context key set relative path for entry key
-  // earlier we didnt have directories so there was
-  // no need of this key
   context: path.resolve('js'),
 	// we have removed the extention from here
 	// as we have already set resolve for extention below
@@ -506,19 +503,12 @@ module.exports = {
 
 
   output: {
-    // path key tells webpack where to put build file
     path: path.resolve('build/js/'),
-    // publicPath key tells webpack the url for which
-    // bundle file will be served
     publicPath: '/public/assets/js/',
 		filename: 'bundle.js'
 	},
 
-  // as we have added folder now, so for webpack to serve
-  // html, we need to tell which folder to look in
-  // this is done by adding new key devServer
   devServer: {
-    // it tells the path of static content
     contentBase: 'public'
   },
 
@@ -579,7 +569,7 @@ But how do webpack know which file is for which html page??
 
 To make webpack understand we have to do the following changes in `webpack.config.js` -
 
-```
+``` js
 var path = require('path');
 // adding webpack module so that we can make shared code in a file
 var webpack = require('webpack');
@@ -627,3 +617,231 @@ module.exports = {
 ```
 
 We will creates seperate bundle for each file and shared code will be present in one file. Shared code have common modules that are imported in our code and other common stuff.
+
+## Adding Images & Fonts to Your Build
+
+We are going to load css/less/sass using webpack. In order to do that we will need some loaders.
+
+### Adding plain css
+
+Our project structure at this time looks like -
+```
+webpack-project
+
+--> css
+----> index.css
+
+--> js
+----> app.js
+
+--> public
+----> index.html
+
+--> webpack.config.js
+--> package.json
+```
+
+
+Dont add style tags in html but add require them like js in `app.js`.
+
+For plain css we need `style-loader` and `css-loader`.
+
+To install them -
+
+`npm install --save-dev style-loader css-loader`
+
+
+Our index.html looks like -
+
+``` js
+<body>
+  <h3>
+    This is h3 heading;
+  </h3>
+</body>
+// it is very necessary to add this script
+// other wise styles wont load
+<script src="/public/assets/js/bundle.js">
+
+</script>
+
+```
+
+Add following changes to your `webpack.config.js` -
+
+``` js
+var path = require('path');
+
+
+module.exports = {
+  context: path.resolve('js'),
+  entry: ["./app.js"],
+	output: {
+    path: path.resolve('build/js/'),
+    publicPath: '/public/assets/js/',
+    filename: 'bundle.js'
+	},
+  devServer: {
+    contentBase: 'public'
+  },
+	module: {
+		loaders: [
+      {
+  			test: /\.css$/,
+        exclude: /node_modules/,
+        // this means as soon as webpack encounters any css
+        // file it will first goto css-loader and then style-loader
+        loader: "style-loader!css-loader"
+      }
+    ]
+	}
+
+}
+
+```
+
+Now run `webpack-dev-server` command and goto brwoser , you will see css will be added into inline style tags.
+
+### Adding SASS
+Our project structure at this point of time looks like -
+```
+webpack-project
+
+--> css
+----> index.sass
+
+--> js
+----> app.js
+
+--> public
+----> index.html
+
+--> webpack.config.js
+--> package.json
+```
+We just have to install `sass-loader` and `node-sass` module and change `webpack.config.js` and `app.js` file.
+
+Changes in `webpack.config.js` -
+
+``` js
+var path = require('path');
+
+
+module.exports = {
+  context: path.resolve('js'),
+  entry: ["./app.js"],
+	output: {
+    path: path.resolve('build/js/'),
+    publicPath: '/public/assets/js/',
+    filename: 'bundle.js'
+	},
+  devServer: {
+    contentBase: 'public'
+  },
+	module: {
+		loaders: [
+      {
+  			test: /\.sass$/,
+        exclude: /node_modules/,
+        // this means as soon as webpack encounters any css
+        // file it will first goto sass-loader then css-loader and then style-loader
+        loader: "style-loader!css-loader!sass-loader"
+      }
+    ]
+	}
+
+}
+
+
+```
+
+Our app.js file now looks like -
+
+``` js
+require('../css/index.sass');
+console.log('App loaded!');
+```
+
+
+Simlarly `less` can be used with webpack too.
+
+
+### Creating Seperate CSS bundle
+To do this we have to install `extract-text-webpack-plugin`.
+
+Then we have to do some changes to `webpack.config.js`.
+
+Changes -
+``` js
+var path = require('path');
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
+
+module.exports = {
+  context: path.resolve('js'),
+  entry: ["./app.js"],
+	output: {
+    path: path.resolve('build/'),
+    publicPath: '/public/assets/',
+    filename: 'bundle.js'
+	},
+  plugins: [
+    // takes name of css file
+    new ExtractTextPlugin("styles.css")
+  ],
+  devServer: {
+    contentBase: 'public'
+  },
+	module: {
+		loaders: [
+      {
+  			test: /\.sass$/,
+        exclude: /node_modules/,
+        // second argument must have booth
+        // sass loader and css loader
+        loader: ExtractTextPlugin.extract( "style-loader", "css-loader!sass-loader")
+      }
+    ]
+	}
+
+}
+
+```
+
+Now we have to do some changes in `index.html`.
+
+Changes -
+```
+<link rel="stylesheet" href="/public/assets/styles.css">
+<body>
+  <h3>
+    This is h3 heading;
+  </h3>
+</body>
+<script src="/public/assets/bundle.js">
+
+</script>
+
+```
+
+
+### Auto Prefixer
+To use auto prefixer for different vendors, we have to install a module named `autoprefixer-loader` and then we have to do some changes to our `webpack.config.js` .
+
+Changes in webpack.config.js
+``` js
+...
+
+module: {
+  loaders: [
+    {
+      test: /\.sass$/,
+      exclude: /node_modules/,
+      // simply add !autoprefixer-loader to
+      // second argument
+      loader: ExtractTextPlugin.extract( "style-loader", "css-loader!autoprefixer-loader!sass-loader")
+    }
+  ]
+}
+...
+
+```
