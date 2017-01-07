@@ -846,3 +846,93 @@ module: {
 ...
 
 ```
+
+## Adding images & fonts
+
+We have to install `url-loader` module, and add that loader in `webpack.config.js` and do some changes in `index.html` and `app.js`.
+
+index.html
+```
+<link rel="stylesheet" href="/public/assets/styles.css">
+<body>
+  <h3>
+    This is h3 heading;
+  </h3>
+
+  // added this element which will have image
+  <span id="img">
+  </span>
+
+  <span>above image is loaded by webpack</span>
+</body>
+<script src="/public/assets/bundle.js">
+
+</script>
+
+```
+
+
+webpack.config.js
+``` js
+var path = require('path');
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
+
+module.exports = {
+  context: path.resolve('js'),
+  entry: ["./app.js"],
+	output: {
+    path: path.resolve('build/'),
+    publicPath: '/public/assets/',
+    filename: 'bundle.js'
+	},
+  plugins: [
+    new ExtractTextPlugin("styles.css")
+  ],
+  devServer: {
+    contentBase: 'public'
+  },
+	module: {
+		loaders: [
+      {
+  			test: /\.sass$/,
+        exclude: /node_modules/,
+        loader: ExtractTextPlugin.extract( "style-loader", "css-loader!autoprefixer-loader!sass-loader")
+      },
+      // added this new loader for images and fonts
+      {
+        test: /\.(png|jpg)$/,
+        exclude: /node_modules/,
+        // we pass parameter by give question
+        // mark and then parameter and its
+        // value. This limit parameter tells
+        // webpack that below this limit make
+        // images x64 encoded data other wise make
+        // seperate request (dont give limit greater than 10kb)
+        loader: 'url-loader?limit=100000'
+      }
+    ]
+	}
+
+}
+
+```
+
+
+Similarly font can be added just by adding `ttf` or `eot` etc in `test` of the `url-loader` loader.
+
+Only change the css file -
+
+```
+// app.css
+// this font will be loaded by webpack..
+// if size is below the limit, then it will loaded
+// inline in base 64 encoding
+@font-face {
+    font-family: myFirstFont;
+    src: url(sansation_light.ttf);
+}
+
+body {
+    font-family: myFirstFont;
+}
+```
