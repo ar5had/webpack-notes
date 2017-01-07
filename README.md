@@ -936,3 +936,306 @@ body {
     font-family: myFirstFont;
 }
 ```
+
+## Webpack Tools
+
+We are now going to rock our webpack with express server. To do so we need express, ejs and morgan as dependency and webpack-dev-middleware as dev dependency.
+
+So after installing all those, we have to do some changes.
+
+Our project structure is -
+```
+webpack-project
+
+--> public
+----> css
+------> styles.css
+
+----> js
+------> app.js
+
+--> views
+----> index.ejs
+
+--> routes
+----> index.js
+
+--> server.js
+--> webpack.config.js
+--> package.json
+
+```
+
+server.js code -
+``` js
+var express = require('express');
+var path = require('path');
+var logger = require('morgan');
+var routes = require('./routes/index');
+
+var app = express();
+
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+
+app.use(logger('dev'));
+
+app.use('/', routes);
+
+// Only load this middle in dev module
+if (app.get('env') === 'development') {
+    var webpackMiddleware = require("webpack-dev-middleware");
+    var webpack = require('webpack');
+
+    var config = require('./webpack.config');
+
+    app.use(webpackMiddleware(webpack(config), {
+      // overriding public path for index.ejs
+      publicPath: "/build",
+      headers: { "X-Custom-Webpack-Header": "yes"},
+      stats: {
+        color: true
+      }
+    }));
+}
+
+app.use((req, res, next)=>{
+  var err = new Error('Not Found');
+  err.status = 404;
+  next(err);
+});
+
+var server = app.listen(8000, () => {console.log('listening on 8000')});
+
+```
+
+index.ejs code -
+
+```
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+     <!-- as public path is overridden in server.js -->
+    <link rel="stylesheet" href="/build/styles.css">
+    <title><%= title %></title>
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <!--  as public path is overridden in server.js -->
+    <script src="/build/bundle.js"></script>
+  </body>
+</html>
+
+```
+
+webpack.config.js -
+``` js
+var path = require('path');
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
+
+module.exports = {
+  context: path.resolve('public/js'),
+  entry: ["./app.js"],
+	output: {
+    path: path.resolve('build/'),
+    publicPath: '/public/assets/',
+    filename: 'bundle.js'
+	},
+  plugins: [
+    // takes name of css file
+    new ExtractTextPlugin("styles.css")
+  ],
+  devServer: {
+    contentBase: 'public'
+  },
+	module: {
+		loaders: [
+      {
+  			test: /\.css$/,
+        exclude: /node_modules/,
+        loader: ExtractTextPlugin.extract( "style-loader", "css-loader")
+      }
+    ]
+	}
+
+}
+
+```
+
+Now to start server , just type `node server` and an express server will start.
+
+
+### Creating a Custom Loader
+We are creating a loader that strips comments from json. Comments in json are evil as they break `require`. We have to load some dev-dependencies `load-json` and `strip-json-comments` for this loader.
+
+Our project structure looks like -
+```
+webpack-project
+
+--> public
+----> index.html
+
+----> js
+------> app.js
+------> cf.json
+
+--> loader
+----> strip.js
+
+
+--> webpack.config.js
+--> package.json
+
+```
+index.html code
+
+```
+<body>
+  <script src="/public/assets/js/bundle.js">
+
+  </script>
+</body>
+
+```
+
+app.js code
+``` js
+console.log('app loaded');
+var c = require("./cf.json");
+console.log(c);
+require('../css/styles.css');
+
+```
+
+cf.json
+``` js
+// here is awesome comment
+
+{
+  "name": "Arshad"
+}
+
+```
+
+stip.js code
+```
+console.log('app loaded');
+var c = require("./cf.json");
+console.log(c);
+require('../css/styles.css');
+
+```
+
+webpack.config.js code
+``` js
+var path = require('path');
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
+
+module.exports = {
+  context: path.resolve('js'),
+  entry: "./app.js",
+	output: {
+    path: path.resolve('build/js/'),
+    publicPath: '/public/assets/js/',
+    filename: 'bundle.js'
+	},
+  plugins: [
+    new ExtractTextPlugin("styles.css")
+  ],
+  devServer: {
+    contentBase: 'public'
+  },
+
+
+	module: {
+
+
+  	loaders: [
+      // this loader is our custom loader
+      {
+        test: /\.json$/,
+        exclude: /node_modules/,
+        // puts path of custom loader that we created!
+        loader: "json-loader!" + path.resolve('loader/strip')
+      },
+
+
+      {
+  			test: /\.css$/,
+        exclude: /node_modules/,
+        loader: ExtractTextPlugin.extract( "style-loader", "css-loader")
+      }
+    ]
+	}
+
+}
+
+```
+
+### Using plugins
+We ae going to install a dev dependency `timestamp-webpack-plugin` and dependency `jquery` which we will add globally throughout all the modules.
+
+app.js code
+``` js
+console.log('app loaded');
+var c = require("./cf.json");
+console.log(c);
+// $ must be present globally
+$("#main").text("modified by jquery");
+require('../css/styles.css');
+```
+
+webpack.config.js code
+``` js
+var path = require('path');
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
+var webpack = require('webpack');
+var TimestampPlugin = require('timestamp-webpack-plugin');
+
+module.exports = {
+  context: path.resolve('js'),
+  entry: "./app.js",
+	output: {
+    path: path.resolve('build/js/'),
+    publicPath: '/public/assets/js/',
+    filename: 'bundle.js'
+	},
+  plugins: [
+    // takes name of css file
+    new ExtractTextPlugin("styles.css"),
+    new webpack.ProvidePlugin({
+      $: "jquery"
+    }),
+    // makes a json file that holds timestamp data
+    // about when last time We run webpack
+    new TimestampPlugin({
+      // set location
+      path: __dirname,
+      // set name
+      filename: 'timestamp.json'
+    }),
+    // adding banner to bundle.js file
+    new webpack.BannerPlugin("|||||||||My Custom Banner|||||||||||\n")
+  ],
+  devServer: {
+    contentBase: 'public'
+  },
+	module: {
+		loaders: [
+      {
+        test: /\.json$/,
+        exclude: /node_modules/,
+        // puts path of custom loader that we created!
+        loader: "json-loader!" + path.resolve('loader/strip')
+      },
+      {
+  			test: /\.css$/,
+        exclude: /node_modules/,
+        loader: ExtractTextPlugin.extract( "style-loader", "css-loader")
+      }
+    ]
+	}
+
+}
+```
