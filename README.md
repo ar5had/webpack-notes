@@ -6,6 +6,7 @@ Simple webpack notes. Reading these notes along with [Webpack Fundamental Course
 - [Need of webpack](#need-of-webpack)
 - [Basics](#basics)
 - [Advanced](#advanced)
+- [Adding CSS](#adding-css)
 - [Adding Images & Fonts](#adding-images-&-fonts)
 - [Webpack Tools](#webpack-tools)
 - [Webpack and Front End Frameworks](#webpack-and-front-end-frameworks)
@@ -618,7 +619,7 @@ module.exports = {
 
 We will creates seperate bundle for each file and shared code will be present in one file. Shared code have common modules that are imported in our code and other common stuff.
 
-## Adding Images & Fonts to Your Build
+## Adding CSS
 
 We are going to load css/less/sass using webpack. In order to do that we will need some loaders.
 
