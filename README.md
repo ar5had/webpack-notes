@@ -7,7 +7,7 @@ Simple webpack notes. Reading these notes along with [Webpack Fundamental Course
 - [Basics](#basics)
 - [Advanced](#advanced)
 - [Adding CSS](#adding-css)
-- [Adding Images & Fonts](#adding-images-&-fonts)
+- [Adding Images and Fonts](#adding-images-and-fonts)
 - [Webpack Tools](#webpack-tools)
 - [Webpack and Front End Frameworks](#webpack-and-front-end-frameworks)
 
@@ -847,7 +847,7 @@ module: {
 
 ```
 
-## Adding images & fonts
+## Adding images and fonts
 
 We have to install `url-loader` module, and add that loader in `webpack.config.js` and do some changes in `index.html` and `app.js`.
 
